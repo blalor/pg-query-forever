@@ -61,42 +61,54 @@ func main() {
     sigCh := make(chan os.Signal, 1)
     signal.Notify(sigCh, os.Interrupt)
 
-    // does not actually connect to database
-    db, err := sql.Open("myPgDialer", opts.Conn)
+    // does not immediately connect to database
+    db, err := sql.Open(DRIVER_NAME, opts.Conn)
     if err != nil {
         log.Fatalf("unable to create connection to database: %v", err)
     }
     defer db.Close()
 
     keepGoing := true
-    for keepGoing {
+    connected := false
+    disconnectedTime := time.Now()
 
+    for keepGoing {
         select {
             case <- sigCh:
                 keepGoing = false
                 log.Debug("got signal")
 
             case <- time.After(opts.Period):
-                log.Debug("tick")
+                // log.Debug("tick")
 
                 ctx, cancel := context.WithTimeout(context.Background(), opts.Period)
 
                 if err = db.PingContext(ctx); err != nil {
                     log.Errorf("unable to ping database: %v", err)
+
+                    if connected {
+                        // connection lost
+                        connected = false
+                        disconnectedTime = time.Now()
+                    }
                 } else {
                     log.Debug("connection good")
+
+                    if ! connected {
+                        connected = true
+                        log.Infof("reconnected after %s", time.Now().Sub(disconnectedTime))
+                    }
 
                     var result interface{}
                     if err = db.QueryRowContext(ctx, opts.Query).Scan(&result); err != nil {
                         log.Errorf("unable to execute query: %v", err)
                     } else {
-                        log.Debug("query result: %#v", result)
+                        log.Debugf("query result: %s", result)
                     }
                 }
 
                 cancel()
         }
-
     }
 
     log.Info("done")

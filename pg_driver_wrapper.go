@@ -11,15 +11,17 @@ import (
     log "github.com/sirupsen/logrus"
 )
 
+// stolen from https://github.com/lib/pq/issues/470#issuecomment-227517227
+
 type pgDriverWrapper struct{}
 
 func (d pgDriverWrapper) Open(name string) (driver.Conn, error) {
-    log.Debugf("Open(%s)", name)
+    // log.Debugf("Open(%s)", name)
     return pq.DialOpen(pgDriverWrapper{}, name)
 }
 
 func (d pgDriverWrapper) Dial(network, address string) (net.Conn, error) {
-    log.Debugf("Dial(%s, %s)", network, address)
+    // log.Debugf("Dial(%s, %s)", network, address)
     conn, err := net.Dial(network, address)
     if err == nil {
         log.Infof("connected to %s", conn.RemoteAddr())
@@ -29,7 +31,7 @@ func (d pgDriverWrapper) Dial(network, address string) (net.Conn, error) {
 }
 
 func (d pgDriverWrapper) DialTimeout(network, address string, timeout time.Duration) (net.Conn, error) {
-    log.Debugf("DialTimeout(%s, %s, %v)", network, address, timeout)
+    // log.Debugf("DialTimeout(%s, %s, %v)", network, address, timeout)
     conn, err := net.DialTimeout(network, address, timeout)
     if err == nil {
         log.Infof("connected to %s", conn.RemoteAddr())
@@ -38,6 +40,7 @@ func (d pgDriverWrapper) DialTimeout(network, address string, timeout time.Durat
     return conn, err
 }
 
+const DRIVER_NAME = "myPgDialer"
 func init() {
-    sql.Register("myPgDialer", pgDriverWrapper{})
+    sql.Register(DRIVER_NAME, pgDriverWrapper{})
 }

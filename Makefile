@@ -51,6 +51,12 @@ stage/$(NAME): $(SOURCES) | stage
 .PHONY: build
 build: stage/$(NAME)
 
+stage/$(NAME)-linux: $(SOURCES) | stage
+	GOOS=linux GOARCH=amd64 go build -o $@ -ldflags '-X main.version=$(VER)' -v .
+
+.PHONY: linux
+linux: stage/$(NAME)-linux
+
 ## duh
 .PHONY: clean
 clean:
