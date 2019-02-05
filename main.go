@@ -62,11 +62,11 @@ func main() {
     signal.Notify(sigCh, os.Interrupt)
 
     // does not actually connect to database
-    conn, err := sql.Open("postgres", opts.Conn)
+    db, err := sql.Open("myPgDialer", opts.Conn)
     if err != nil {
         log.Fatalf("unable to create connection to database: %v", err)
     }
-    defer conn.Close()
+    defer db.Close()
 
     keepGoing := true
     for keepGoing {
@@ -74,18 +74,20 @@ func main() {
         select {
             case <- sigCh:
                 keepGoing = false
+                log.Debug("got signal")
 
             case <- time.After(opts.Period):
                 log.Debug("tick")
+
                 ctx, cancel := context.WithTimeout(context.Background(), opts.Period)
 
-                if err = conn.PingContext(ctx); err != nil {
+                if err = db.PingContext(ctx); err != nil {
                     log.Errorf("unable to ping database: %v", err)
                 } else {
                     log.Debug("connection good")
 
                     var result interface{}
-                    if err = conn.QueryRowContext(ctx, opts.Query).Scan(&result); err != nil {
+                    if err = db.QueryRowContext(ctx, opts.Query).Scan(&result); err != nil {
                         log.Errorf("unable to execute query: %v", err)
                     } else {
                         log.Debug("query result: %#v", result)
@@ -96,4 +98,6 @@ func main() {
         }
 
     }
+
+    log.Info("done")
 }
