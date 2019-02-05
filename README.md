@@ -1,28 +1,31 @@
-# An opinionated template for Go projects
+pg-query-forever is little utility I wrote when trying to measure the downtime of a database upgrade.  
 
-Fully isolated from other Go environments with [Go Modules](https://github.com/golang/go/wiki/Modules).
+```json
+{"time":"2019-02-05T16:51:22Z","msg":"hi there! (tickertape tickertape)","level":"debug"}
+{"time":"2019-02-05T16:51:22Z","msg":"version: 1e32e87-dirty","level":"info"}
+{"time":"2019-02-05T16:51:23Z","msg":"connected to 10.0.0.121:5432","level":"info"}
+{"time":"2019-02-05T16:51:23Z","msg":"reconnected after 1.040444082s","level":"info"}
+…
+{"time":"2019-02-05T16:53:56Z","msg":"connected to 10.0.0.121:5432","level":"info"}
+{"time":"2019-02-05T16:53:56Z","msg":"reconnected after 6.032698897s","level":"info"}
+…
+{"time":"2019-02-05T17:02:19Z","msg":"unable to ping database: dial tcp 10.0.0.121:5432: i/o timeout","level":"error"}
+…
+{"time":"2019-02-05T17:02:50Z","msg":"connected to 10.0.3.191:5432","level":"info"}
+{"time":"2019-02-05T17:02:50Z","msg":"reconnected after 1m11.213686395s","level":"info"}
+```
 
-## setup
+## building
 
-0. Bootstrap your project:  
-`curl -L -s https://github.com/blalor/go-template/archive/master.tar.gz | tar -xz --strip-components=1`
-1. Write tests
-2. Write code
-3. Profit
+    make
 
-## `make` targets
+Generates `stage/pg-query-forever`
 
-* `all` (default) -- runs tests and builds `stage/$(NAME)`
-* `rpm` -- builds an RPM with [fpm](https://github.com/jordansissel/fpm/)
+## using
 
-## features
+    pg-query-forever \
+        --debug \
+        --log-file=pg-query.log \
+        --connect='postgres://user:passwd@localhost:5432/db?connect_timeout=5'
 
-* [go-flags](https://github.com/jessevdk/go-flags) for command-line option parsing
-* [logrus](https://github.com/sirupsen/logrus) for logging (because `log` is too simplistic)
-* [ginkgo](https://github.com/onsi/ginkgo/ginkgo) for BDD tests
-* [testify](https://github.com/stretchr/testify) for mocks, which isn't great, but is better than nothing
-
-## credits
-
-* [Embeddable version string](http://technosophos.com/2014/06/11/compile-time-string-in-go.html)
-* [Capturing panic output to log file](https://code.google.com/p/go/issues/detail?id=325)
+`^C` to quit. `--help` for help.
